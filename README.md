@@ -20,7 +20,8 @@ SZTU深圳技术大学北区校园网自动登录脚本
    pip install comtypes
    ```
 
-2. 修改autologin.py中的学号和密码两行为自己的，即可运行。![image-20230512210232834](https://raw.githubusercontent.com/shadow-aaa/markdown_photo/main/PicGo/202305122102894.png)
+2. 修改autologin.py中的学号和密码两行为自己的，即可运行。(更新后,请以实际代码提示为准)
+   ![image-20230512210232834](https://raw.githubusercontent.com/shadow-aaa/markdown_photo/main/PicGo/202305122102894.png)
 
 ## Better use
 
