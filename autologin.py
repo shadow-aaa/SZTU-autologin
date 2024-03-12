@@ -3,7 +3,6 @@ import time
 import requests    # 用于向目标网站发送请求
 import socket  # 用于获得自己的IP
 import pywifi   # 用于尝试并连接wifi
-import comtypes  # 似乎封装成EXE时需要这个模块
 import base64  # 用于base64加密
 
 wifi = pywifi.PyWiFi()  # 创建一个无线对象
@@ -79,10 +78,10 @@ if __name__ == '__main__':
                 else:
                     response = requests.post(url, finaldata, headers=header,proxies=proxies,timeout=200)
                     if (ping_host('http://www.baidu.com') != 302):
-                        print("登录完毕,联网成功😀")
+                        print("登录完毕,联网成功")
                     else:
-                        print("未知错误😢")
+                        print("未知错误")
                 break
-        time.sleep(2)
+    time.sleep(3)
     if(i==20):
         print("请手动连接wifi后重试")
