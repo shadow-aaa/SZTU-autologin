@@ -1,17 +1,19 @@
 # SZTU-autologin
 SZTU深圳技术大学北区校园网自动登录脚本
 
-觉得好用不妨点个star
+觉得好用不妨点个star😋
 
 ## How to use?
 
-本脚本使用python编写，使用很简单。以vscode为例说明。
+本脚本使用python编写，使用需要python基础。以vscode为例说明。
 
-1. 至少下载autologin.py和requirements.txt
+1. 至少下载autologin.py和requirements.txt，电脑中安装了python和pip（这个一般python安装自带）。
 
-2. 在终端使用`pip install -r requirements.txt`来安装脚本必须的运行库
+2. 在终端使用`pip install -r requirements.txt`来安装运行代码必须的模块（如果仍然提示模块缺失，可能是requirements没有添加全，请自行安装缺失的模块）。
 
-3. 修改autologin.py中的学号和密码两行为自己的，即可运行。（更新后,请以实际代码提示为准）
+3. 修改autologin.py中的学号和密码两行为自己的，**连接wifi后**即可运行。（更新后,请以实际代码提示为准）
+
+4. 如果一点python都不会，也不想学，可以移步到后记的他人写好的软件，只需更改配置即可使用。
 
 ## Better use
 
@@ -41,7 +43,7 @@ SZTU深圳技术大学北区校园网自动登录脚本
 
    [详细打包教程](https://blog.csdn.net/libaineu2004/article/details/112612421)
 
-3. 放入开机自启动任务
+3. 放入开机自启动任务，不过**请将wifi设置为自动连接**
 
    [任务计划法](https://blog.csdn.net/baidu_38493460/article/details/118081809)
 
