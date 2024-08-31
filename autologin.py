@@ -20,7 +20,7 @@ def ping_host(ip):  # 联网测试
     return response1.status_code
 
 
-def get_host_ip():  # 变动IP获取
+def get_host_ip():  # 本机IP获取
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
