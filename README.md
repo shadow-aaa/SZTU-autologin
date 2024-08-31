@@ -7,21 +7,11 @@ SZTU深圳技术大学北区校园网自动登录脚本
 
 本脚本使用python编写，使用很简单。以vscode为例说明。
 
-1. 安装脚本所需模块
+1. 至少下载autologin.py和requirements.txt
 
-   在vscode的终端运行
+2. 在终端使用`pip install -r requirements.txt`来安装脚本必须的运行库
 
-   ```
-   pip install time
-   pip install requests
-   pip install socket
-   pip install ping3
-   pip install pywifi
-   pip install comtypes
-   ```
-
-2. 修改autologin.py中的学号和密码两行为自己的，即可运行。(更新后,请以实际代码提示为准)
-   ![image-20230512210232834](https://raw.githubusercontent.com/shadow-aaa/markdown_photo/main/PicGo/202305122102894.png)
+3. 修改autologin.py中的学号和密码两行为自己的，即可运行。（更新后,请以实际代码提示为准）
 
 ## Better use
 
