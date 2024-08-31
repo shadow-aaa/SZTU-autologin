@@ -228,11 +228,13 @@ def login():
 
     if 'ok' in srun_portal_res.text:
         print('登陆成功')
+        time.sleep(3)
     else:
         error_msg = eval(re.search('\((.*?)\)', srun_portal_res.text).group(1))
         # 输出错误信息
         print('error_type:'+error_msg['error'])
         print(error_msg['error_msg'])
+        time.sleep(5)
 
 
 if __name__ == '__main__':
