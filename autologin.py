@@ -1,87 +1,245 @@
 # _*_ coding : utf-8 _*_
+import math
+import socket
+import hashlib
+import hmac
+import requests
 import time
-import requests    # 用于向目标网站发送请求
-import socket  # 用于获得自己的IP
-import pywifi   # 用于尝试并连接wifi
-import base64  # 用于base64加密
-
-wifi = pywifi.PyWiFi()  # 创建一个无线对象
-ifaces = wifi.interfaces()[0]  # 取一个无线网卡
-def isConnected():  # 自动连接wifi
-    if ifaces.status() == pywifi.const.IFACE_CONNECTED:
-        return True
-    else:
-        return False
+import re
+from urllib.parse import quote
 
 
-def ping_host(ip):  # 联网测试
-    ip_address = ip
-    response1 = requests.get(ip_address, allow_redirects=False,proxies=proxies,timeout=200)
-    return response1.status_code
+def force(msg):
+    ret = []
+    for w in msg:
+        ret.append(ord(w))
+    return bytes(ret)
 
 
-def get_host_ip():  # 本机IP获取
+def ordat(msg, idx):
+    if len(msg) > idx:
+        return ord(msg[idx])
+    return 0
+
+
+def sencode(msg, key):
+    l = len(msg)
+    pwd = []
+    for i in range(0, l, 4):
+        pwd.append(
+            ordat(msg, i) | ordat(msg, i + 1) << 8 | ordat(msg, i + 2) << 16
+            | ordat(msg, i + 3) << 24)
+    if key:
+        pwd.append(l)
+    return pwd
+
+
+def lencode(msg, key):
+    l = len(msg)
+    ll = (l - 1) << 2
+    if key:
+        m = msg[l - 1]
+        if m < ll - 3 or m > ll:
+            return
+        ll = m
+    for i in range(0, l):
+        msg[i] = chr(msg[i] & 0xff) + chr(msg[i] >> 8 & 0xff) + chr(
+            msg[i] >> 16 & 0xff) + chr(msg[i] >> 24 & 0xff)
+    if key:
+        return "".join(msg)[0:ll]
+    return "".join(msg)
+
+
+def get_xencode(msg, key):
+    if msg == "":
+        return ""
+    pwd = sencode(msg, True)
+    pwdk = sencode(key, False)
+    if len(pwdk) < 4:
+        pwdk = pwdk + [0] * (4 - len(pwdk))
+    n = len(pwd) - 1
+    z = pwd[n]
+    y = pwd[0]
+    c = 0x86014019 | 0x183639A0
+    m = 0
+    e = 0
+    p = 0
+    q = math.floor(6 + 52 / (n + 1))
+    d = 0
+    while 0 < q:
+        d = d + c & (0x8CE0D9BF | 0x731F2640)
+        e = d >> 2 & 3
+        p = 0
+        while p < n:
+            y = pwd[p + 1]
+            m = z >> 5 ^ y << 2
+            m = m + ((y >> 3 ^ z << 4) ^ (d ^ y))
+            m = m + (pwdk[(p & 3) ^ e] ^ z)
+            pwd[p] = pwd[p] + m & (0xEFB8D130 | 0x10472ECF)
+            z = pwd[p]
+            p = p + 1
+        y = pwd[0]
+        m = z >> 5 ^ y << 2
+        m = m + ((y >> 3 ^ z << 4) ^ (d ^ y))
+        m = m + (pwdk[(p & 3) ^ e] ^ z)
+        pwd[n] = pwd[n] + m & (0xBB390742 | 0x44C6F8BD)
+        z = pwd[n]
+        q = q - 1
+    return lencode(pwd, False)
+
+
+_PADCHAR = "="
+_ALPHA = "LVoJPiCN2R8G90yg+hmFHuacZ1OWMnrsSTXkYpUq/3dlbfKwv6xztjI7DeBE45QA"
+
+
+def _getbyte(s, i):
+    # print(s,' ',i)
+    x = ord(s[i])
+    if (x > 255):
+        print("INVALID_CHARACTER_ERR: DOM Exception 5")
+        exit(0)
+    return x
+
+
+def get_base64(s):
+    i = 0
+    b10 = 0
+    x = []
+    imax = len(s) - len(s) % 3
+    if len(s) == 0:
+        return s
+    for i in range(0, imax, 3):
+        b10 = (_getbyte(s, i) << 16) | (
+            _getbyte(s, i + 1) << 8) | _getbyte(s, i + 2)
+        x.append(_ALPHA[(b10 >> 18)])
+        x.append(_ALPHA[((b10 >> 12) & 63)])
+        x.append(_ALPHA[((b10 >> 6) & 63)])
+        x.append(_ALPHA[(b10 & 63)])
+    i = imax
+    if len(s) - imax == 1:
+        b10 = _getbyte(s, i) << 16
+        x.append(_ALPHA[(b10 >> 18)] +
+                 _ALPHA[((b10 >> 12) & 63)] + _PADCHAR + _PADCHAR)
+    elif len(s) - imax == 2:
+        b10 = (_getbyte(s, i) << 16) | (_getbyte(s, i + 1) << 8)
+        x.append(_ALPHA[(b10 >> 18)] + _ALPHA[((b10 >> 12) & 63)
+                                              ] + _ALPHA[((b10 >> 6) & 63)] + _PADCHAR)
+    return "".join(x)
+
+
+def get_sha1(value):
+    return hashlib.sha1(value.encode()).hexdigest()
+
+
+def get_md5(password, token):
+    return hmac.new(token.encode(), password.encode(), hashlib.md5).hexdigest()
+
+
+header = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.26 Safari/537.36'
+}
+get_challenge_api = "http://172.19.0.5/cgi-bin/get_challenge"
+srun_portal_api = "http://172.19.0.5/cgi-bin/srun_portal"
+n = '200'
+type = '1'
+ac_id = '17'
+enc = "srun_bx1"
+
+
+def get_chksum():
+    chkstr = token+username
+    chkstr += token+hmd5
+    chkstr += token+ac_id
+    chkstr += token+ip
+    chkstr += token+n
+    chkstr += token+type
+    chkstr += token+i
+    return chkstr
+
+
+def get_info():
+    info_temp = {
+        "username": username,
+        "password": password,
+        "ip": ip,
+        "acid": ac_id,
+        "enc_ver": enc
+    }
+    i = re.sub("'", '"', str(info_temp))
+    i = re.sub(" ", '', i)
+    return i
+
+
+def init_getip():
+    global ip
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
         ip = s.getsockname()[0]
     finally:
         s.close()
-    return ip
 
 
-# 需要输入数据的校园网登录界面
-url = 'http://47.98.217.39/lfradius/libs/portal/unify/portal.php/login/cmcc_login'
+def get_token():
+    # print("获取token")
+    global token
+    get_challenge_params = {
+        "callback": "jQuery112406608265734960486_"+str(int(time.time()*1000)),
+        "username": username,
+        "ip": ip,
+        "_": int(time.time()*1000),
+    }
+    get_challenge_res = requests.get(
+        get_challenge_api, params=get_challenge_params, headers=header)
+    token = re.search('"challenge":"(.*?)"', get_challenge_res.text).group(1)
+    print(get_challenge_res.text)
+    print("token为:"+token)
 
-# 对data进行base64编码
-myip = get_host_ip()
-data = '{"usrname":"你的学号","passwd":"你的密码","usrmac":"30:e2:47:8a:f8:f7","usrip":"'+myip +\
-    '","basip":"172.17.127.254","nasid":"3","success":"http:\/\/47.98.217.39\/lfradius\/libs\/portal\/unify\/portal.php\/login\/success\/","fail":"http:\/\/47.98.217.39\/lfradius\/libs\/portal\/unify\/portal.php\/login\/fail\/","v":1,"t":"pap"}'
-encodedata = base64.b64encode(data.encode('utf-8'))
-finaldata = 'cmcc_login_value='+str(encodedata, 'utf-8')
 
-header = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-    "Accept-Encoding": "gzip, deflate",
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    "Cache-Control": "max-age=0",
-    "Connectin": "keep-alive",
-    "Content-Length": "376",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Host": "47.98.217.39",
-    "Origin": "http://47.98.217.39",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
-}
-proxies = { "http": None, "https": None}   #规避梯子打开的情况
+def do_complex_work():
+    global i, hmd5, chksum
+    i = get_info()
+    i = "{SRBX1}"+get_base64(get_xencode(i, token))
+    hmd5 = get_md5(password, token)
+    chksum = get_sha1(get_chksum())
+    print("所有加密工作已完成")
 
-# POST 方式向 URL 发送表单,实际上登录按钮就是发post数据包
+
+def login():
+    srun_portal_params = {
+        'callback': 'jQuery11240645308969735664_'+str(int(time.time()*1000)),
+        'action': 'login',
+        'username': username,  # username,
+        'password': '{MD5}'+hmd5,
+        'ac_id': ac_id,
+        'ip': ip,
+        'chksum': chksum,
+        'info': i,
+        'n': n,
+        'type': type,
+        'os': 'windows+10',
+        'name': 'windows',
+        'double_stack': 0,
+        '_': int(time.time()*1000)
+    }
+    print(srun_portal_params)
+    srun_portal_res = requests.get(
+        srun_portal_api, params=srun_portal_params, headers=header)
+
+    if 'ok' in srun_portal_res.text:
+        print('登陆成功')
+    else:
+        error_msg = eval(re.search('\((.*?)\)', srun_portal_res.text).group(1))
+        # 输出错误信息
+        print('error_type:'+error_msg['error'])
+        print(error_msg['error_msg'])
+
+
 if __name__ == '__main__':
-    i=1
-    while(i<20):
-        # 断开之前连接,尝试连接SZTU-student
-        if (isConnected() == False):
-            ifaces.disconnect()  # 断开网卡连接
-            time.sleep(0.5)  # 缓冲0.5秒
-            profile = pywifi.Profile()  # 配置文件
-            profile.ssid = "SZTU-student"  # wifi名称
-            tmp_profile = ifaces.add_network_profile(profile)  # 加载配置文件
-            ifaces.connect(tmp_profile)  # 连接
-            time.sleep(2)  # 等待2秒后看下是否成功连接了  
-            print("尝试连接wifi "+str(i)+"次")
-            i+=1
-        else:
-            if (isConnected() == True):  # 连接SZTU-student成功,尝试登录
-                print("网卡已连上SZTU-student,正在尝试登录")
-                if (ping_host('http://www.baidu.com') != 302):
-                    print("您已登录,无需重复登录")
-                else:
-                    response = requests.post(url, finaldata, headers=header,proxies=proxies,timeout=200)
-                    if (ping_host('http://www.baidu.com') != 302):
-                        print("登录完毕,联网成功")
-                    else:
-                        print("未知错误")
-                break
-    time.sleep(3)
-    if(i==20):
-        print("请手动连接wifi后重试")
+    global username, password
+    username = "20xx@cucc"  # 你的用户名和密码，末尾加上@cmcc(移动) 或者@chinanet(电信)，@cucc(联通)
+    password = ""
+    init_getip()
+    get_token()
+    do_complex_work()
+    login()
