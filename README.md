@@ -61,3 +61,6 @@ SZTU深圳技术大学北区校园网自动登录脚本
 
 也可参考前文的**详细打包教程**来解决问题
 
+## THE END
+
+本文代码来自[xia0ji233's blog](https://xia0ji233.pro/2021/12/08/%E6%A0%A1%E5%9B%AD%E7%BD%91%E6%A8%A1%E6%8B%9F%E7%99%BB%E5%BD%95/)，进行了小幅修改，原理可看文章详情。同时深澜软件的联网软件可以看看[BitSrunLoginGo](https://github.com/Mmx233/BitSrunLoginGo)，支持多平台😉
