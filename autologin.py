@@ -217,7 +217,7 @@ def login():
         'info': i,
         'n': n,
         'type': type,
-        'os': 'windows+10',
+        'os': 'windows 10',
         'name': 'windows',
         'double_stack': 0,
         '_': int(time.time()*1000)
