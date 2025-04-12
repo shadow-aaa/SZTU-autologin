@@ -1,4 +1,5 @@
 # _*_ coding : utf-8 _*_
+import os
 import math
 import socket
 import hashlib
@@ -236,11 +237,31 @@ def login():
         print(error_msg['error_msg'])
         time.sleep(5)
 
+def check_wifi():
+    # 获取当前连接的WiFi名称（适用于Windows）
+    try:
+        # 适用于Windows
+        wifi_name = os.popen('netsh wlan show interfaces').read()
+        if 'SSID' in wifi_name:
+            ssid_line = [line for line in wifi_name.split('\n') if 'SSID' in line]
+            if ssid_line:
+                current_wifi = ssid_line[0].split(":")[1].strip()
+                print(f"当前连接WiFi名称：{current_wifi}")
+                return current_wifi == "SZTU-student"
+    except Exception as e:
+        print(f"获取WiFi名称失败: {e}")
+        return False
+
+    return False
 
 if __name__ == '__main__':
     global username, password
     username = "20xx@cucc"  # 你的用户名和密码，末尾加上@cmcc(移动) 或者@chinanet(电信)，@cucc(联通)
     password = ""
+    if not check_wifi():
+        print("你连接的不是北区宿舍的WiFi，程序将在3秒后退出")
+        time.sleep(3)
+        exit()
     init_getip()
     get_token()
     do_complex_work()
