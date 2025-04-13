@@ -258,6 +258,7 @@ if __name__ == '__main__':
     global username, password
     username = "20xx@cucc"  # 你的用户名和密码，末尾加上@cmcc(移动) 或者@chinanet(电信)，@cucc(联通)
     password = ""
+    time.sleep(3)#开机自启时给电脑一点时间处理其它
     if not check_wifi():
         print("你连接的不是北区宿舍的WiFi，程序将在3秒后退出")
         time.sleep(3)
