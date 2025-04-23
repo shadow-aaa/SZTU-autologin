@@ -228,7 +228,7 @@ def login():
         srun_portal_api, params=srun_portal_params, headers=header)
 
     if 'ok' in srun_portal_res.text:
-        print('登陆成功')
+        print('登录成功')
         time.sleep(3)
     else:
         error_msg = eval(re.search('\((.*?)\)', srun_portal_res.text).group(1))
